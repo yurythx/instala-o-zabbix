@@ -1,0 +1,776 @@
+Vamos falar um pouquinho sobre cada um desses itens: 
+
+Monitoramento: visualização de dados, problemas, níveis de serviço. 
+Inventário: Acesso aos dados de inventário dos recursos monitorados. 
+Relatórios: Visão do status do Zabbix Server, emissão de relatórios de disponibilidade entre outros. 
+Configuração: Inclusão de tudo que é relacionado a monitoramento (hosts, templates, notificações, ações, entre outros). 
+Administração: Configurações gerais do zabbix (Autenticação, cadastro de usuários, permissões, etc). 
+
+Elementos do Zabbix 
+
+Para entender melhor o funcionamento do Zabbix, é importante conhecer alguns Elementos fundamentais que são utilizados na plataforma. Vamos explorar esses conceitos: 
+
+Hosts 
+
+São os dispositivos na rede que podem ser monitorados pelo Zabbix. Isso inclui computadores, impressoras, servidores, roteadores, relógios de ponto, entre outros. Cada dispositivo que tem um endereço IP na rede e pode ser monitorado pelo Zabbix. 
+
+Itens (Items) 
+
+São as fontes de informação que o Zabbix utiliza para coletar os dados com o objetivo de retornar uma métrica. Podem incluir métricas como uso de CPU, memória, rede e espaço em disco. O monitoramento pode ser feito de várias maneiras, incluindo via ping, SNMP (Simple Network Management Protocol) e JMX (Java Management Extensions) e podem ser de diferentes tipos: 
+
+Agente Zabbix — passivo (consulta realizada pelo servidor). 
+
+Agente Zabbix — ativo(dados processados pelo agente e transmitidos para o servidor) 
+
+Monitoramento simples — executado pelo servidor(não depende de agente). 
+
+Agente SNMP (protocolo presente em diversos dispositivos de rede). 
+
+Trapper (Objeto externo que pode injetar dados dentro do Zabbix Server usando o Zabbix Sender). 
+
+Arquivos de log (arquivos de log dos sistemas monitorados) 
+
+Interno (para verificação de saúde do Zabbix server). 
+
+Monitoramento externo (feito através de scripts) 
+
+SSH(autenticação via chaves ou senhas) 
+
+telnet (autenticação via senha) 
+
+Agente JMX (monitoramento Java) 
+
+Agente IPMI(monitoramento inteligente de hardware) 
+
+Banco de dados (realizado via Query) 
+
+Calculado (utilizando dados existentes na base de dados do Zabbix Server) 
+
+Triggers (Gatilhos) 
+
+Uma vez que um host está sendo monitorado e o Zabbix faz a coleta de algum item neste host, é possível manipular o item através de triggers. Toda vez que um novo valor chegar para o Zabbix, é possível ele tomar alguma decisão relacionada ao host. Triggers são regras que definem condições para gerar alertas. Por exemplo, uma trigger pode ser definida para gerar um alerta se o uso de CPU de um servidor ultrapassar um determinado limite. 
+
+Eventos 
+
+São acontecimentos gerados pelo Zabbix em resposta a condições específicas definidas nas triggers. Podem incluir alertas de e-mail, notificações, ou até mesmo ações automatizadas, como o registro de novos dispositivos na rede. 
+
+Templates (Modelos) 
+
+São conjuntos padrão de elementos que facilitam a operação do ambiente de monitoramento. Um template pode incluir configurações predefinidas para itens, triggers e outros elementos de monitoramento. Isso permite uma rápida configuração e padronização do monitoramento em vários dispositivos. Com a utiização de templates, tudo acontece por herança, ou seja, um host pode está associado vários templates sendo que o template também pode herdar vários outros templates. 
+
+Macros no Zabbix 
+
+Em termos simples, uma macro no Zabbix é uma sequência de caracteres que representa um valor dinâmico. Esses valores dinâmicos podem ser extraídos de diferentes fontes, como nomes de hosts, endereços IP, valores de itens monitorados, nomes de triggers, entre outros. 
+
+As macros são amplamente utilizadas em várias partes da configuração do Zabbix, incluindo: 
+
+Nomes de hosts e itens. 
+
+Parâmetros de triggers. 
+
+Comandos de ações. 
+
+Mensagens de notificação. 
+
+Configurações de mídia. 
+
+E muito mais. 
+
+Ao usar macros, os administradores podem criar configurações mais genéricas e reutilizáveis, reduzindo a necessidade de configurações específicas e redundantes. 
+
+Sintaxe das Macros 
+
+As macros no Zabbix são identificadas pelo símbolo de cifrão ($) seguido pelo nome da macro. A sintaxe básica de uma macro no Zabbix é a seguinte: 
+
+{$NOME_DA_MACRO} 
+
+Quando o Zabbix encontra uma macro em qualquer lugar da configuração, ele a substitui pelo valor correspondente durante o processamento. 
+
+Exemplos de Utilização de Macros 
+
+Agora, vamos explorar alguns exemplos de como as macros podem ser usadas no Zabbix para simplificar a configuração e personalização do monitoramento. 
+
+Exemplo 1: Nomes de Hosts Dinâmicos 
+
+Suponha que você esteja monitorando vários servidores em um ambiente de nuvem e deseje que o nome do host no Zabbix corresponda ao nome real do servidor na nuvem. Você pode definir o nome do host no Zabbix usando uma macro: 
+
+Nome do Host: {$EC2_INSTANCE_NAME} 
+
+Dessa forma, o nome do host no Zabbix será dinamicamente substituído pelo nome da instância do EC2 correspondente. 
+
+Exemplo 2: Parâmetros de Trigger Dinâmicos 
+
+Ao configurar triggers para alertas, você pode usar macros para personalizar as mensagens de alerta com informações relevantes. Por exemplo: 
+
+Trigger: Uso de CPU em {$HOSTNAME} excedeu {$TRIGGER.VALUE}%. 
+
+Neste exemplo, as macros {$HOSTNAME} e {$TRIGGER.VALUE} são substituídas pelo nome do host e pelo valor do item monitorado, respectivamente, durante a geração do alerta. 
+
+Exemplo 3: Configurações de Mídia Dinâmicas 
+
+Ao configurar notificações por email, você pode usar macros para incluir informações contextuais nas mensagens de notificação. Por exemplo: 
+
+Assunto: Alerta - {$TRIGGER.NAME} em {$HOSTNAME} 
+
+Neste caso, as macros são usadas para incluir o nome da trigger e o nome do host no assunto do email. 
+
+Tipos de Macros 
+
+Existem três tipos principais de macros no Zabbix: Macros de sistema, Macros globais e Macros de descoberta. Vamos explorar as diferenças entre eles: 
+
+1. Macros de Sistema 
+
+As macros de sistema são aquelas predefinidas pelo próprio Zabbix para representar informações específicas do sistema. Elas são automaticamente atribuídas pelo Zabbix e geralmente estão relacionadas a propriedades do host, itens, triggers e outras configurações do sistema de monitoramento. 
+
+Exemplos de macros de sistema incluem: 
+
+{HOSTNAME}: Representa o nome do host monitorado. 
+
+{ITEM.VALUE}: Representa o valor atual de um item monitorado. 
+
+{TRIGGER.NAME}: Representa o nome da trigger que foi acionada. 
+
+Essas macros são úteis para personalizar mensagens de alerta, nomes de hosts e outras configurações com informações dinâmicas do sistema. 
+
+2. Macros Globais (macros de usuário): 
+
+As macros globais são aquelas definidas pelo usuário no nível global do Zabbix e estão disponíveis para todos os hosts, itens, triggers e outras configurações no sistema. Elas são úteis para definir valores que são comuns a todos os elementos monitorados, permitindo uma configuração mais consistente e centralizada. 
+
+Por exemplo, você pode definir uma macro global chamada {$EMAIL_ADMIN} para armazenar o endereço de email do administrador do sistema e usar essa macro em todas as notificações por email do Zabbix. Isso permite que você altere o endereço de email do administrador em um único local, em vez de ter que atualizá-lo em várias configurações separadas. 
+
+3. Macros de Descoberta: 
+
+As macros de descoberta são específicas para o uso em regras de descoberta de itens no Zabbix. Elas são usadas para representar informações dinâmicas sobre os itens descobertos durante processos de descoberta automáticos. 
+
+Quando você configura uma regra de descoberta no Zabbix, pode definir macros de descoberta para extrair informações específicas dos itens descobertos e usá-las em outros lugares da configuração do sistema. 
+
+Por exemplo, ao descobrir automaticamente novos dispositivos em uma rede, você pode definir uma macro de descoberta para representar o endereço IP de cada dispositivo descoberto {#IP_DISPOSITIVO}. Em seguida, você pode usar essa macro em outras configurações, como nomes de hosts ou parâmetros de itens. 
+
+Regras de Descoberta 
+
+As regras de descoberta são uma característica poderosa do Zabbix que permitem automatizar o processo de descoberta e monitoramento de novos recursos em sua infraestrutura de rede. Elas são especialmente úteis em ambientes dinâmicos, nos quais novos dispositivos, serviços ou aplicativos são adicionados regularmente e precisam ser monitorados sem intervenção manual. 
+
+Como Funcionam as Regras de Descoberta? 
+
+As regras de descoberta funcionam em conjunto com agentes ativos, agentes passivos, SNMP e outros métodos de descoberta suportados pelo Zabbix. O processo básico de descoberta envolve os seguintes passos: 
+
+Definição da Regra de Descoberta: O administrador configura uma regra de descoberta especificando os critérios para identificar novos recursos. Isso pode incluir faixas de endereços IP, padrões de nomes de hosts, tipos de dispositivos, entre outros. 
+
+Execução da Descoberta: O Zabbix executa periodicamente a descoberta com base nas regras configuradas. Durante esse processo, ele verifica se os recursos correspondem aos critérios definidos na regra de descoberta. 
+
+Criação Automática de Itens, Triggers e Gráficos: Quando um novo recurso é descoberto e corresponde aos critérios da regra de descoberta, o Zabbix cria automaticamente itens de monitoramento, triggers e gráficos associados a esse recurso. Esses elementos são configurados de acordo com os modelos predefinidos pelo administrador. 
+
+Utilitários de linha de Comando 
+
+Com uma variedade de ferramentas disponíveis, os administradores podem simplificar processos de configuração, troubleshooting e manutenção de sistemas no Zabbix. Para manter esse artigo enxuto, resolvi escrever um outro artigo para falar sobre esse assunto. 
+
+Actions 
+
+No Zabbix, as “actions” são uma parte fundamental do sistema de notificação e automação. Elas permitem que você configure o que acontece quando eventos específicos ocorrem no seu ambiente monitorado. Aqui está uma visão geral sobre as actions no Zabbix: 
+
+Definição de eventos: As actions são acionadas por eventos específicos, que podem ser disparados por problemas de monitoramento, como um servidor que fica offline, uma alta utilização de CPU, ou qualquer outro tipo de condição que você deseje monitorar. 
+
+Condições: Você pode configurar condições para as suas actions. Por exemplo, você pode definir uma action para ser acionada apenas quando um evento específico ocorrer em um determinado grupo de hosts, ou quando certos critérios forem atendidos, como uma severidade mínima. 
+
+Operações: As actions consistem em uma série de operações que são executadas quando um evento acionador é detectado. Isso pode incluir o envio de notificações por e-mail, SMS, mensagens instantâneas, execução de scripts personalizados, reinicialização de serviços, entre outras ações. 
+
+Escalonamento: Você pode configurar ações para que as notificações sejam enviadas em diferentes momentos ou para diferentes pessoas, dependendo da gravidade do problema. Por exemplo, você pode definir que um alerta de baixa prioridade seja enviado por e-mail para a equipe de operações, enquanto alertas críticos são enviados por SMS para os administradores de sistema. 
+
+Templates: O Zabbix permite que você crie templates de ações, o que facilita a reutilização e a padronização das configurações de notificação e automação em todo o seu ambiente de monitoramento. 
+
+Em resumo, as actions no Zabbix são uma maneira poderosa de automatizar a resposta a eventos de monitoramento, garantindo que a equipe de operações seja alertada rapidamente sobre problemas no ambiente de TI e facilitando a resolução proativa de incidentes. 
+
+Exemplo prático de uso (Monitoramento básico) 
+
+Chegou a hora de botar a mão na massa. Como já foi dito a função do Zabbix é coletar informações de hosts e para isso devemos configurar esses hosts através da interface Web. Um monitoramento básico envolve 3 etapas: 
+
+Criar um host. 
+
+Criar itens que serão monitorados. 
+
+Definir um limite de um problema criando uma trigger. 
+
+Alertar sobre o problema ocorrido. 
+
+Vamos criar um exemplo prático de uso do Zabbix para monitorar a utilização da CPU em um servidor Linux. Neste exemplo, configuraremos um item de monitoramento no Zabbix para coletar dados sobre a utilização da CPU e exibir um gráfico na interface web do Zabbix. 
+
+Configuração do Item de Monitoramento 
+
+Acesse a interface web do Zabbix e faça login com suas credenciais de administrador. 
+
+Navegue até “Configuration” > “Hosts” (Na versão 6.4.10 o nome mudou para “data collection”). 
+
+ 
+
+Selecione o host que deseja monitorar (o servidor Linux em questão) e clique na aba “Items”. 
+
+ 
+
+Depois em “Create Item” 
+
+ 
+
+Defina os seguintes parâmetros: 
+
+Name: Nome do item (por exemplo, “Uso de CPU”). 
+
+Type of information: Tipo de informação a ser monitorada (por exemplo, “Zabbix Agent”). 
+
+Key: Chave para coletar a informação (por exemplo, system.cpu.util[,idle] para monitorar a utilização da CPU ociosa). 
+
+Outros exemplos 
+
+Monitorar a utilização total da CPU de todas as CPUs lógicas no modo instantâneo: 
+
+system.cpu.util[,user] 
+
+Monitorar a utilização do sistema da primeira CPU lógica (CPU 0) em média nos últimos 5 minutos: 
+
+system.cpu.util[0,system,avg5] 
+
+Monitorar a utilização da CPU em estado de espera de entrada/saída (iowait) de todas as CPUs físicas no modo instantâneo: 
+
+system.cpu.util[,iowait,,1] 
+
+Monitorar a utilização total da CPU em modo de convidado (guest) de todas as CPUs lógicas no modo instantâneo: 
+
+system.cpu.util[,guest] 
+
+Esses exemplos podem ser adaptados conforme necessário para monitorar diferentes aspectos da utilização da CPU em sua instalação do Zabbix. 
+
+ 
+
+Type: Tipo de informação (por exemplo, “Numeric (float)”). 
+
+ 
+
+Update interval: Intervalo de atualização dos dados (por exemplo, 30 segundos). 
+
+Configure quaisquer outros parâmetros conforme necessário e clique em “Add” para salvar o item. 
+
+ 
+
+Visualização do Gráfico de Utilização da CPU 
+
+Na interface web do Zabbix, vá para “Monitoring” > “hosts”. 
+
+ 
+
+Selecione o host e o item de monitoramento que você acabou de criar. 
+
+ 
+
+Você verá um gráfico mostrando a utilização da CPU ao longo do tempo. 
+
+ 
+
+Outro Exemplo prático: Monitoramento de VMs no Oracle VirtualBox com Zabbix e Vagrant 
+
+Agora mostrarei os passos para criar e configurar três VMs usando Vagrant no Oracle VirtualBox, instalar o Zabbix Agent em cada VM e configurar o Zabbix Server para monitorar a utilização de CPU, memória RAM e disco das VMs. 
+
+Configuração das VMs usando Vagrant 
+
+Instalação do Vagrant e VirtualBox 
+
+Para Ubuntu: 
+
+# Instalar o VirtualBox 
+sudo apt update 
+sudo apt install -y virtualbox 
+# Instalar o Vagrant 
+sudo apt install -y vagrant 
+
+Criação do Vagrantfile 
+
+Crie um diretório para seu projeto e um arquivo Vagrantfile dentro deste diretório. 
+
+mkdir zabbix-vms 
+cd zabbix-vms 
+
+Crie o arquivo Vagrantfile: 
+
+nano Vagrantfile 
+
+Adicione o seguinte conteúdo ao Vagrantfile: 
+
+Vagrant.configure("2") do |config| 
+  config.vm.define "vm1" do |vm1| 
+    vm1.vm.box = "ubuntu/bionic64" 
+    vm1.vm.network "private_network", type: "dhcp" 
+    vm1.vm.hostname = "vm1" 
+    vm1.vm.provision "shell", inline: <<-SHELL 
+      sudo apt-get update 
+      sudo apt-get install -y zabbix-agent 
+      sudo sed -i 's/Server=127.0.0.1/Server=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/ServerActive=127.0.0.1/ServerActive=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/Hostname=Zabbix server/Hostname=vm1/' /etc/zabbix/zabbix_agentd.conf 
+      sudo systemctl restart zabbix-agent 
+      sudo systemctl enable zabbix-agent 
+    SHELL 
+  end 
+config.vm.define "vm2" do |vm2| 
+    vm2.vm.box = "ubuntu/bionic64" 
+    vm2.vm.network "private_network", type: "dhcp" 
+    vm2.vm.hostname = "vm2" 
+    vm2.vm.provision "shell", inline: <<-SHELL 
+      sudo apt-get update 
+      sudo apt-get install -y zabbix-agent 
+      sudo sed -i 's/Server=127.0.0.1/Server=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/ServerActive=127.0.0.1/ServerActive=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/Hostname=Zabbix server/Hostname=vm2/' /etc/zabbix/zabbix_agentd.conf 
+      sudo systemctl restart zabbix-agent 
+      sudo systemctl enable zabbix-agent 
+    SHELL 
+  end 
+  config.vm.define "vm3" do |vm3| 
+    vm3.vm.box = "ubuntu/bionic64" 
+    vm3.vm.network "private_network", type: "dhcp" 
+    vm3.vm.hostname = "vm3" 
+    vm3.vm.provision "shell", inline: <<-SHELL 
+      sudo apt-get update 
+      sudo apt-get install -y zabbix-agent 
+      sudo sed -i 's/Server=127.0.0.1/Server=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/ServerActive=127.0.0.1/ServerActive=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf 
+      sudo sed -i 's/Hostname=Zabbix server/Hostname=vm3/' /etc/zabbix/zabbix_agentd.conf 
+      sudo systemctl restart zabbix-agent 
+      sudo systemctl enable zabbix-agent 
+    SHELL 
+  end 
+end 
+
+Detalhamento dos comandos 
+
+Vagrant.configure("2") do |config|: Inicia a configuração do Vagrant usando a versão 2 da sintaxe de configuração. 
+
+config.vm.define "vm1" do |vm1|: Define uma VM chamada "vm1". 
+
+vm1.vm.box = "ubuntu/bionic64": Especifica que a VM "vm1" usará a imagem Ubuntu 18.04 (Bionic Beaver). 
+
+vm1.vm.network "private_network", type: "dhcp": Configura a VM para usar uma rede privada com DHCP, permitindo que ela receba um IP dinâmico. 
+
+vm1.vm.hostname = "vm1": Define o hostname da VM como "vm1". 
+
+vm1.vm.provision "shell", inline: <<-SHELL: Usa um script shell para provisionar a VM. 
+
+sudo apt-get update: Atualiza a lista de pacotes disponíveis. 
+
+sudo apt-get install -y zabbix-agent: Instala o agente do Zabbix. 
+
+sudo sed -i 's/Server=127.0.0.1/Server=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf: Modifica a configuração do Zabbix Agent para apontar para o IP do servidor Zabbix. Substitua <IP_DO_ZABBIX_SERVER> pelo IP do seu servidor Zabbix. 
+
+sudo sed -i 's/ServerActive=127.0.0.1/ServerActive=<IP_DO_ZABBIX_SERVER>/' /etc/zabbix/zabbix_agentd.conf: Modifica a configuração do Zabbix Agent para apontar para o servidor ativo Zabbix. Substitua <IP_DO_ZABBIX_SERVER> pelo IP do seu servidor Zabbix. 
+
+sudo sed -i 's/Hostname=Zabbix server/Hostname=vm1/' /etc/zabbix/zabbix_agentd.conf: Define o hostname da VM no arquivo de configuração do agente Zabbix. 
+
+sudo systemctl restart zabbix-agent: Reinicia o serviço do agente Zabbix para aplicar as mudanças. 
+
+sudo systemctl enable zabbix-agent: Habilita o agente Zabbix para iniciar automaticamente no boot. 
+
+Este processo é repetido para as VMs “vm2” e “vm3”, com as respectivas mudanças no hostname e nos comandos do script shell. 
+
+Substitua <IP_DO_ZABBIX_SERVER> pelo IP do seu Zabbix Server. 
+
+Passo a Passo para Descobrir o IP das VMs 
+
+Para descobrir o IP de cada VM criada via Vagrant, você pode usar o comando vagrant ssh para acessar cada VM e, em seguida, usar o comando ip a ou ifconfig para listar as interfaces de rede e identificar o IP da VM. Aqui está um passo a passo para fazer isso: 
+
+Suba as VMs com Vagrant: No diretório onde está o arquivo Vagrantfile, execute: 
+
+Acesse a Primeira VM (vm1): 
+
+vagrant ssh vm1 
+
+Descubra o IP da VM: Dentro da VM, execute: 
+
+ip aouifconfig 
+
+Procure pelo IP atribuído à interface de rede que está configurada para private_network. 
+
+Repita os Passos para as Outras VMs: Saia da VM atual digitando exit e, em seguida, acesse as outras VMs (vm2 e vm3) e repita o processo para descobrir seus respectivos IPs. 
+
+Exemplo de Saída do Comando ip a 
+
+A saída do comando ip a será algo assim: 
+
+2: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000 
+    link/ether 08:00:27:4b:8a:07 brd ff:ff:ff:ff:ff:ff 
+    inet 192.168.56.101/24 brd 192.168.56.255 scope global dynamic enp0s8 
+       valid_lft 84623sec preferred_lft 84623sec 
+    inet6 fe80::a00:27ff:fe4b:8a07/64 scope link  
+      valid_lft forever preferred_lft forever 
+
+No exemplo acima, o IP da VM é 192.168.56.101. 
+
+Inicialização das VMs 
+
+Inicialize e configure as VMs com o Vagrant: 
+
+vagrant up 
+
+Configuração do Zabbix Server para monitorar as VMs 
+
+Adicione as VMs no Zabbix Server 
+
+Acesse o painel de controle do Zabbix: 
+
+Abra o navegador e acesse http://<IP_DO_ZABBIX_SERVER>/zabbix. 
+
+Adicione um host para cada VM: 
+
+Vá para “Configuration” -> “Hosts”. 
+
+Clique em “Create host”. 
+
+Preencha o formulário: 
+
+Hostname: vm1 (ou vm2, vm3 conforme necessário). 
+
+Visible name: Opcional, pode ser o mesmo que o hostname. 
+
+ 
+
+Groups: Adicione ao grupo apropriado (e.g., “Linux servers”). 
+
+ 
+
+Interfaces: Adicione a interface com o IP da VM e o tipo de agente como “Agent” (porta padrão 10050). 
+
+ 
+
+Adicione templates para monitorar CPU, Memória e Disco: 
+
+Vá para a aba “Templates”. 
+
+Clique em “Select” e escolha os templates apropriados: 
+
+Linux by Zabbix agent 
+
+Outros templates específicos se necessário. 
+
+ 
+
+Repita para cada VM (vm2, vm3). 
+
+Para associar templates aos hosts criados no Zabbix, siga os passos abaixo: 
+
+Navegue até a Configuração de Hosts: Vá para Configuration -> Hosts. 
+
+Selecione o Host ao Qual Deseja Associar o Template: 
+
+Clique no nome do host que deseja editar (por exemplo, vm1). 
+
+Vá para a Aba de Templates: 
+
+Dentro da página de configuração do host, vá para a aba Templates. 
+
+Adicionar um Template: 
+
+Clique em Select para abrir a lista de templates disponíveis. 
+
+Na janela pop-up, pesquise e selecione o template que deseja associar. Para monitoramento de CPU, memória RAM e utilização de disco, você pode usar o template Template OS Linux que geralmente cobre essas métricas. 
+
+Clique em Select novamente para fechar a janela de seleção. 
+
+Salvar as Configurações: 
+
+Clique em Update para salvar as configurações do host. 
+
+ 
+
+Repita esse processo para cada um dos hosts (vm1, vm2, vm3). 
+
+Associação de templates aos hosts através de Scripts de Provisionamento (Opcional) 
+
+Se você desejar automatizar a associação de templates aos hosts, você pode usar a API do Zabbix. Abaixo está um exemplo de script Python usando a API do Zabbix para associar um template a um host: 
+
+import requests 
+import json 
+ 
+# Parâmetros de conexão 
+zabbix_url = "http://<IP_DO_SERVIDOR_ZABBIX>/zabbix/api_jsonrpc.php" 
+zabbix_user = "Admin" 
+zabbix_password = "zabbix" 
+# Autenticação 
+payload = { 
+    "jsonrpc": "2.0", 
+    "method": "user.login", 
+    "params": { 
+        "user": zabbix_user, 
+        "password": zabbix_password 
+    }, 
+    "id": 1 
+} 
+headers = {'content-type': 'application/json'} 
+response = requests.post(zabbix_url, data=json.dumps(payload), headers=headers) 
+auth_token = response.json()['result'] 
+# Associar Template ao Host 
+def link_template_to_host(host_name, template_name): 
+    # Obter ID do host 
+    payload = { 
+        "jsonrpc": "2.0", 
+        "method": "host.get", 
+        "params": { 
+            "filter": { 
+                "host": [host_name] 
+            } 
+        }, 
+        "auth": auth_token, 
+        "id": 1 
+    } 
+    response = requests.post(zabbix_url, data=json.dumps(payload), headers=headers) 
+    host_id = response.json()['result'][0]['hostid'] 
+    # Obter ID do template 
+    payload = { 
+        "jsonrpc": "2.0", 
+        "method": "template.get", 
+        "params": { 
+            "filter": { 
+                "host": [template_name] 
+            } 
+        }, 
+        "auth": auth_token, 
+        "id": 1 
+    } 
+    response = requests.post(zabbix_url, data=json.dumps(payload), headers=headers) 
+    template_id = response.json()['result'][0]['templateid'] 
+    # Linkar template ao host 
+    payload = { 
+        "jsonrpc": "2.0", 
+        "method": "host.update", 
+        "params": { 
+            "hostid": host_id, 
+            "templates": [ 
+                { 
+                    "templateid": template_id 
+                } 
+            ] 
+        }, 
+        "auth": auth_token, 
+        "id": 1 
+    } 
+    response = requests.post(zabbix_url, data=json.dumps(payload), headers=headers) 
+    return response.json() 
+# Exemplo de uso 
+link_template_to_host("vm1", "Template OS Linux") 
+link_template_to_host("vm2", "Template OS Linux") 
+link_template_to_host("vm3", "Template OS Linux") 
+
+Este script autentica-se na API do Zabbix, obtém os IDs do host e do template, e então associa o template ao host. Ajuste os valores de zabbix_url, zabbix_user, zabbix_password, host_name e template_name conforme necessário. 
+
+Detalhes dos Templates 
+
+Linux by Zabbix Agent: Esse template padrão inclui itens de monitoramento para CPU, memória, disco e outros parâmetros relevantes de sistemas operacionais Linux. 
+
+Se você precisar de templates adicionais ou específicos, você pode importar novos templates ou criar seus próprios templates personalizados. 
+
+Configurações de hosts, itens, templates através da API do Zabbix 
+
+Aqui está um script Python baseado no texto fornecido, que contempla a criação dos hosts e a associação ao template “Linux by Zabbix Agent” utilizando a API do Zabbix: 
+
+import requests 
+import json 
+ 
+# Configurações do Zabbix 
+zabbix_url = "http://172.17.0.4:8080/api_jsonrpc.php" 
+zabbix_user = "Admin" 
+zabbix_password = "zabbix" 
+token = "453bc4ccf69ed6e91239fc350babc156540985f5e31283878a2cf80befd67e1e" 
+ 
+# Função para criar um host 
+def create_host(host_name, ip_address, group_id, template_id): 
+    host_data = { 
+        "jsonrpc": "2.0", 
+        "method": "host.create", 
+        "params": { 
+            "host": host_name, 
+            "interfaces": [ 
+                { 
+                    "type": 1, 
+                    "main": 1, 
+                    "useip": 1, 
+                    "ip": ip_address, 
+                    "dns": "", 
+                    "port": "10050" 
+                } 
+            ], 
+            "groups": [ 
+                { 
+                    "groupid": group_id 
+                } 
+            ], 
+            "templates": [ 
+                { 
+                    "templateid": template_id 
+                } 
+            ] 
+        }, 
+        "auth": token, 
+        "id": 1 
+    } 
+ 
+    response = requests.post(zabbix_url, json=host_data) 
+    return response.json() 
+ 
+# Função para obter o ID do grupo 
+def get_group_id(group_name): 
+    group_data = { 
+        "jsonrpc": "2.0", 
+        "method": "hostgroup.get", 
+        "params": { 
+            "filter": { 
+                "name": [group_name] 
+            } 
+        }, 
+        "auth": token, 
+        "id": 1 
+    } 
+ 
+    response = requests.post(zabbix_url, json=group_data) 
+    result = response.json() 
+    if 'result' in result and result['result']: 
+        return result['result'][0]['groupid'] 
+    else: 
+        print(f"Erro ao obter ID do grupo: {result}") 
+        return None 
+ 
+# Função para obter o ID do template 
+def get_template_id(template_name): 
+    template_data = { 
+        "jsonrpc": "2.0", 
+        "method": "template.get", 
+        "params": { 
+            "filter": { 
+                "host": [template_name] 
+            } 
+        }, 
+        "auth": token, 
+        "id": 1 
+    } 
+ 
+    response = requests.post(zabbix_url, json=template_data) 
+    result = response.json() 
+    if 'result' in result and result['result']: 
+        return result['result'][0]['templateid'] 
+    else: 
+        print(f"Erro ao obter ID do template: {result}") 
+        return None 
+ 
+# Função principal 
+def main(): 
+    group_id = get_group_id("Linux servers") 
+    if not group_id: 
+        print("Erro ao obter o ID do grupo") 
+        return 
+ 
+    template_id = get_template_id("Linux by Zabbix agent") 
+    if not template_id: 
+        print("Erro ao obter o ID do template") 
+        return 
+ 
+    hosts = [ 
+        {"name": "vm2", "ip": "192.168.56.102"}, 
+        {"name": "vm3", "ip": "192.168.56.103"} 
+    ] 
+ 
+    for host in hosts: 
+        result = create_host(host["name"], host["ip"], group_id, template_id) 
+        print(f"Host {host['name']} created: {result}") 
+ 
+if __name__ == "__main__": 
+    main() 
+
+Este script cria os hosts vm2 e vm3 com os respectivos endereços IP 192.168.1.101, 192.168.1.102 e 192.168.1.103, e associa o template "Linux by Zabbix Agent" a cada um deles. 
+
+ 
+
+Certifique-se de substituir <IP_DO_SERVIDOR_ZABBIX>, <USUARIO> e <SENHA> pelos valores correspondentes do seu ambiente. Além disso, você pode ajustar os nomes e endereços IP dos hosts conforme necessário. 
+
+ 
+
+Criação de Triggers 
+
+Podemos criar Triggers que apontam quando a utilização da CPU atinge um limiar crítico. 
+
+Vamos fazer isso através da API do Zabbix. Para criar uma trigger no Zabbix usando a API, você pode seguir este exemplo de script Python: 
+
+import requests 
+import json 
+# Configurações do Zabbix 
+zabbix_url = "http://172.17.0.4:8080/api_jsonrpc.php" 
+zabbix_user = "Admin" 
+zabbix_password = "zabbix" 
+token = "453bc4ccf69ed6e91239fc350babc156540985f5e31283878a2cf80befd67e1e" 
+# Função para criar uma trigger 
+def create_trigger(description, expression): 
+    trigger_data = { 
+        "jsonrpc": "2.0", 
+        "method": "trigger.create", 
+        "params": { 
+            "description": description, 
+            "expression": expression, 
+            "priority": 3 
+        }, 
+        "auth": token, 
+        "id": 1 
+    } 
+    response = requests.post(zabbix_url, json=trigger_data) 
+    return response.json() 
+# Função principal 
+def main(): 
+    # Descrição da trigger 
+    description = "Threshold maior que 70" 
+     
+   # Expressão da trigger 
+    expression = "last(/vm1/system.cpu.util)>70" 
+     
+   # Criar a trigger 
+    result = create_trigger(description, expression) 
+     
+   # Exibir o resultado 
+    print("Trigger criada:", result) 
+if __name__ == "__main__": 
+    main() 
+
+Neste script, a função create_trigger é usada para criar uma trigger no Zabbix. Você precisa fornecer a descrição da trigger e a expressão que define quando a trigger será acionada. Na expressão fornecida, {Template OS Linux:system.cpu.load.last(0)} é um exemplo de item que representa a carga do CPU no template "Template OS Linux". A trigger será acionada quando o valor desse item for maior que 70. 
+
+Configuração de Alertas 
+
+Se desejar, você pode configurar alertas para serem notificados quando a utilização da CPU atingir um limiar crítico. Para isso, você pode seguir estes passos: 
+
+Vá para “Configuration” > “Actions” e crie uma nova ação. 
+
+Defina as condições de acionamento do alerta com base na utilização da CPU. 
+
+Configure as operações de ação, como enviar um e-mail ou uma mensagem. 
+
+Ative a ação e salve as configurações. 
+
+Com essa configuração, você terá um sistema de monitoramento da utilização da CPU em seu servidor Linux usando o Zabbix. Você poderá visualizar a utilização da CPU em tempo real e receber alertas se a utilização exceder um limite definido. Essas informações são valiosas para garantir que seu servidor esteja funcionando de forma eficiente e para identificar possíveis problemas de desempenho. 
+
+Verifique os dados de monitoramento 
+
+Verifique se os agentes estão conectados: 
+
+Vá para “Monitoring” -> “Latest data”. 
+
+Selecione a VM (e.g., vm1) e veja se há dados sendo coletados. 
+
+ 
+
+Adicione gráficos para visualização: 
+
+Vá para “Monitoring” -> “Graphs”. 
+
+ 
+
+Selecione a VM e veja gráficos de utilização de CPU, memória e disco. 
+
+ 
+
+Com esses passos, você deve ter suas três VMs configuradas no Oracle VirtualBox usando Vagrant, com o Zabbix Agent instalado e configurado em cada VM, e o Zabbix Server monitorando a utilização de CPU, memória RAM e disco das VMs. 
+
+Conclusão 
+
+O Zabbix é uma ferramenta poderosa e versátil para monitoramento de infraestrutura de TI, oferecendo uma ampla gama de funcionalidades e benefícios para organizações de todos os tamanhos. Com sua capacidade de monitoramento proativo, análise de desempenho, alertas configuráveis, visualizações personalizáveis e segurança robusta, o Zabbix se destaca como uma escolha ideal para garantir a disponibilidade e o desempenho contínuos dos sistemas de TI. Ao adotar o Zabbix, as organizações podem melhorar a eficiência operacional, reduzir o tempo de inatividade e garantir a satisfação do cliente. 
+
+ 
