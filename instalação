@@ -1,0 +1,153 @@
+Passo 1: Preparação do Ambiente 
+
+Antes de instalar o Zabbix, é uma boa prática garantir que seu sistema esteja atualizado. Você pode fazer isso executando os seguintes comandos: 
+
+sudo apt update 
+sudo apt upgrade 
+
+Passo 2: Instalação do MariaDB 
+
+O Zabbix suporta uma série de SGBD’s, instalaremos o MariaDB. Execute os seguintes comandos: 
+
+sudo apt install mariadb-server 
+sudo mysql_secure_installation 
+
+Durante a instalação segura, você será solicitado a definir uma senha para o usuário root do MariaDB. 
+
+Garanta que o Banco esteja incializado através do comando: 
+
+sudo systemctl start mariadb 
+
+Passo 3: Configuração do MariaDB 
+
+Você precisará criar um banco de dados e um usuário dedicado para o Zabbix. Após a instalação, conecte-se ao MariaDB com o seguinte comando: 
+
+sudo mysql -uroot -p 
+
+Dentro do shell do MariaDB, execute os seguintes comandos para criar o banco de dados do Zabbix e conceder permissões adequadas: 
+
+create database zabbix character set utf8 collate utf8_bin; 
+grant all privileges on zabbix.* to zabbix@localhost identified by 'zabbix'; 
+quit; 
+
+Passo 4: Instalação do Zabbix 
+
+Vamos começar instalando os pacotes necessários do Zabbix. Execute os seguintes comandos: 
+
+cd /usr/src 
+wget https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-4%2Bubuntu22.04_all.deb 
+sudo dpkg -i zabbix-release_6.0-4+ubuntu22.04_all.deb 
+sudo apt update 
+sudo apt install zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-sql-scripts zabbix-agent 
+
+Passo 5: Configuração do Banco de Dados Zabbix 
+
+Carregue as informações do banco de dados do Zabbix com o seguinte comando: 
+
+zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | sudo mysql -uzabbix -p zabbix 
+
+Insira a senha quando solicitado. 
+
+Passo 6: Configuração do Zabbix Server 
+
+Abra o arquivo de configuração do Zabbix Server para fazer algumas alterações: 
+
+sudo nano /etc/zabbix/zabbix_server.conf 
+
+Dentro do arquivo, ajuste as seguintes linhas: 
+
+DBHost=localhost 
+DBName=zabbix 
+DBUser=zabbix 
+DBPassword=zabbix 
+
+Passo 7: Configuração do Apache 
+
+Abra o arquivo de configuração do Apache para ajustar o fuso horário e outras configurações: 
+
+sudo nano /etc/apache2/conf-available/zabbix.conf 
+
+Descomente a linha php_value date.timezone Europe/Riga e altere para php_value date.timezone America/Sao_Paulo. 
+
+Passo 8: Instalação do Suporte a PT-BR 
+
+Instale o suporte para o idioma Português Brasileiro: 
+
+sudo locale-gen pt_BR.UTF-8 
+
+Passo 9: Reinicialização dos Serviços 
+
+Reinicie todos os serviços relacionados ao Zabbix e Apache: 
+
+sudo systemctl restart zabbix-server zabbix-agent apache2 
+sudo systemctl enable zabbix-server zabbix-agent apache2 
+
+Verifique o status para garantir que todos os serviços estejam em execução corretamente: 
+
+sudo systemctl status zabbix-server zabbix-agent apache2 
+
+Passo 10: Acesso à Interface Web do Zabbix 
+
+Descubra o endereço IP do seu servidor executando: 
+
+hostname -I 
+
+Acesse a interface web do Zabbix em um navegador usando o endereço IP encontrado: 
+
+http://<IP_do_servidor>/zabbix 
+
+
+Depois de concluir as configurações, você terá o Zabbix Server instalado e funcionando em seu servidor Ubuntu 22.04. 
+
+ 
+
+Faça login com as seguintes credenciais: 
+
+Usuário: Admin (com “A” maiúsculo) 
+
+Senha: zabbix 
+
+ 
+
+Você pode então começar a adicionar hosts para monitoramento e configurar itens, triggers, gráficos e muito mais através do frontend do Zabbix. 
+
+ 
+
+Subindo o Zabbix com Docker 
+
+Aqui está o resumo dos comandos para instalação do Zabbix utilizando Docker com MariaDB: 
+
+# Atualizar os repositórios 
+sudo apt-get update 
+# Instalar Docker Compose 
+sudo apt-get install docker-compose 
+# Verificar status do Docker 
+sudo systemctl status docker 
+# Iniciar Docker (se não estiver ativo) 
+sudo systemctl start docker 
+# Baixar as imagens necessárias 
+docker pull mariadb:11.3 
+docker pull zabbix/zabbix-server-mysql:latest 
+docker pull zabbix/zabbix-web-nginx-mysql:latest 
+docker pull zabbix/zabbix-java-gateway:latest 
+docker pull zabbix/zabbix-agent:latest 
+# Criar e iniciar os containers 
+docker run --name zabbix-mariadb -e MYSQL_ROOT_PASSWORD=root_password -e MYSQL_DATABASE=zabbix -e MYSQL_USER=zabbix -e MYSQL_PASSWORD=zabbix_password -d mariadb:latest 
+docker run --name zabbix-server-mysql --link zabbix-mariadb:mysql -e DB_SERVER_HOST="mysql" -e MYSQL_USER="zabbix" -e MYSQL_PASSWORD="zabbix_password" -e MYSQL_DATABASE="zabbix" -d zabbix/zabbix-server-mysql:latest 
+docker run --name zabbix-web-nginx-mysql -e DB_SERVER_HOST="mysql" -e MYSQL_USER="zabbix" -e MYSQL_PASSWORD="zabbix_password" -e MYSQL_DATABASE="zabbix" -e ZBX_SERVER_HOST="zabbix-server-mysql" --link zabbix-mariadb:mysql --link zabbix-server-mysql:zabbix-server -p 8080:8080 -d zabbix/zabbix-web-nginx-mysql:latest 
+docker run --name zabbix-java-gateway -d zabbix/zabbix-java-gateway:latest 
+docker run --name zabbix-agent --link zabbix-server-mysql:zabbix-server -d zabbix/zabbix-agent:latest 
+# Verificar os containers em execução 
+docker ps 
+# Acessar a interface web do Zabbix 
+# No navegador, acessar: http://<IP_DA_SUA_MAQUINA>:8080 
+# Usuário: Admin 
+# Senha: zabbix 
+
+Substitua <IP_DA_SUA_MAQUINA> pelo endereço IP da sua máquina onde o Docker está instalado. Este comando cria e inicia os containers necessários para rodar o Zabbix com MariaDB como banco de dados. 
+
+Explorando a interface Web 
+
+Após o logon, a tela acima é exibida. Através do menu a esquerda é que trabalhamos com Zabbix. 
+
+ 
